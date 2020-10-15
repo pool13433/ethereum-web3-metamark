@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CQSCoin</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.1/css/bulma.min.css"
+      integrity="sha512-ZRv40llEogRmoWgZwnsqke3HNzJ0kiI0+pcMgiz2bxO6Ew1DVBtWjVn0qjrXdT3+u+pSN36gLgmJiiQ3cQtyzA=="
+      crossorigin="anonymous"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="components/profile.js"></script>
+    <script src="components/wallet.js"></script>
+  </head>
+  <body>
+    <div id="ethereumApp" class="container is-widescreen">
+      <section class="section">
+        <div class="container">
+          <!-- CONNECTION_REFUSED-->
+          <div
+            class="columns is-mobile"
+            v-if="metamarkStatus=='CONNECTION_REFUSED'"
+          >
+            <div class="column">
+              <a
+                href="https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn"
+                target="_blank"
+                class="button is-danger is-fullwidth"
+                >ระบบไม่พร้อมให้ใช้บริการ Connection Refused</a
+              >
+            </div>
+          </div>
+          <!-- /CONNECTION_REFUSED -->
+
+          <!-- METAMARK_NOT_INSTALL -->
+          <div
+            class="columns is-mobile"
+            v-else-if="metamarkStatus=='METAMARK_NOT_INSTALL'"
+          >
+            <div class="column">
+              <a
+                href="https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn"
+                target="_blank"
+                class="button is-primary is-fullwidth"
+                >ก่อนการใช้งานให้ติดตั้ง "Metamark" Chrome Extension
+                ก่อนการเข้าใช้งาน</a
+              >
+            </div>
+          </div>
+          <!--/ METAMARK_NOT_INSTALL -->
+
+          <!--METAMARK_INSTALLED -->
+          <div
+            class="column is-full"
+            v-else-if="metamarkStatus=='METAMARK_INSTALLED'"
+          >
+            <div class="column is-full">
+              <button
+                type="button"
+                class="button is-primary"
+                :class="[tab.colorClass]"
+                v-for="(tab ,index) in metaTabAction"
+                @click="()=> metaTabActive = index"
+              >
+                {{tab.text}}
+              </button>
+            </div>
+
+            <!-- Tab 1-->
+            <div
+              class="columns is-multiline is-mobile"
+              v-if="metaTabActive == 'address'"
+            >
+              <div
+                class="column is-one-quarter"
+                v-for="(receive , index ) in addressReceive"
+                :key="index"
+              >
+                <card-wallet :wallet="receive"></card-wallet>
+              </div>
+            </div>
+            <!-- /Tab 1-->
+
+            <!-- Tab 2 -->
+            <div class="columns" v-if="metaTabActive == 'transaction'">
+              <div class="column is-one-third">
+                <card-profile
+                  :public-address="wallet.publicAddress"
+                  :balance="wallet.balance.eth"
+                ></card-profile>
+              </div>
+              <div class="column">
+                <!-- Transaction Form-->
+                <form @submit.prevent="sendingMetamarkTransaction">
+                  <div class="field">
+                    <label class="label">Receiver Public Address</label>
+                    <div class="control">
+                      <select
+                        class="input select"
+                        v-model="transaction.receive"
+                        required
+                      >
+                        <option
+                          :value="receive.address"
+                          v-for="(receive,index) in addressReceive"
+                        >
+                          [{{receive.address}}]: [{{receive.balance.eth}}]
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">Unit (ETH)</label>
+                    <div class="control">
+                      <input
+                        class="input"
+                        type="text"
+                        placeholder=" ex. 1"
+                        v-model="transaction.value"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label"
+                      >Gas Price (WEI) (1 ETH = 1000000000000000000 wei)</label
+                    >
+                    <div class="control">
+                      <input
+                        class="input"
+                        type="text"
+                        placeholder="Gas Price ex. 100000 wei"
+                        v-model="transaction.gasPrice"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label class="label"
+                      >Gas Limit (WEI) (1 ETH = 1000000000000000000 wei)</label
+                    >
+                    <div class="control">
+                      <input
+                        class="input"
+                        type="text"
+                        placeholder="Gas Limit ex. 100000 wei"
+                        v-model="transaction.gas"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="field is-grouped">
+                    <div class="control">
+                      <button class="button is-success">
+                        Sending Transaction
+                      </button>
+                    </div>
+                    <div class="control">
+                      <button
+                        type="button"
+                        class="button is-text"
+                        @click="resetMetamarkTransaction"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                <!-- /Transaction Form-->
+              </div>
+            </div>
+            <!-- /Tab 2 -->
+
+            <!-- Tab 3 -->
+            <div class="columns" v-if="metaTabActive == 'create'">
+              <div class="column is-full">
+                <div class="field">
+                  <label class="label">กำหนด รหัสผ่าน</label>
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="text"
+                      placeholder="The password to encrypt this account with."
+                      v-model="personal.password"
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="button is-primary"
+                  @click="createMetamarkAccound"
+                >
+                  Genarate new Account
+                </button>
+              </div>
+            </div>
+            <!-- /Tab 3 -->
+          </div>
+          <!--/METAMARK_INSTALLED -->
+        </div>
+      </section>
+    </div>
+    <script type="text/javascript" src="index.js"></script>
+  </body>
+</html>
