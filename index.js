@@ -22,7 +22,7 @@ new Vue({
       transaction: {
         receive: null,
         value: 0,
-        gasPrice: 100000,
+        gasPrice: 100000,  //1000000000
         gas: 100000,
       },
       web3: null,
@@ -36,14 +36,7 @@ new Vue({
     }
   },
   created () {
-    const isCQS = false
-    const hostProvider = isCQS ? 'http://localhost:7545' : 'http://localhost:7545'
-    //const hostProvider = 'https://ropsten.infura.io/v3/0512e7e5f5fb43d8a56f7cd39c4d4f93'
-
-    // Pool-Coin
-    /*const hostProjectId = '0512e7e5f5fb43d8a56f7cd39c4d4f93' // CQS-Coin
-    const hostProvider = 'https://ropsten.infura.io/v3/' + hostProjectId
-    const hostProviderSocket = 'wss://ropsten.infura.io/ws/v3/' + hostProjectId*/
+    const hostProvider = 'http://localhost:6545'
     console.log('Web3 Version ::==' + Web3.version)
     fetch(hostProvider).then(() => {
       if (typeof window.ethereum === 'undefined') {
@@ -128,15 +121,15 @@ new Vue({
         gasPrice: utils.toHex(gasPrice), //100000
         gas: utils.toHex(gas), //100000
         nonce: '0x00', // ignored by MetaMask
-        from: publicAddress, // must match user's active address.
-        to: receive, // Required except during contract publications.
-        //to: '0xce2dA4d43245a9315A1434ee532615f32d19b7E5'
+        //from: publicAddress, // must match user's active address.
+        from: ethereum.selectedAddress,
+        to: receive, // Required except during contract publications.        
       }
       //0x0Fa5190FF566b506D299557Bf2D028BdbE4a9ac4
       console.log('transactionParameters ::==' + JSON.stringify(transactionParameters))
       //return
       try {
-        /*const txHash = await eth.sendTransaction(transactionParameters)*/
+        //const txHash = await eth.sendTransaction(transactionParameters)
         const txHash = await ethereum.request({
           method: 'eth_sendTransaction',
           params: [transactionParameters],
